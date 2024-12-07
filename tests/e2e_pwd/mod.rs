@@ -33,6 +33,9 @@ fn teardown(context: &Context) {
     .unwrap();
 }
 
+/// Runs provided function in test folder & pwd.
+/// It will be run inside `TEST_PATH` path, defined as a constant inside the source code.
+/// (`"./e2e_temp"`)
 pub fn run_inside_test_path<T>(func: T)
 where
   T: Fn() -> () + panic::RefUnwindSafe,

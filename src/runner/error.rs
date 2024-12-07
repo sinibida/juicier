@@ -1,0 +1,4 @@
+/// Stub
+pub struct Error {
+
+}

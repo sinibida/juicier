@@ -1,15 +1,23 @@
-mod common;
+mod e2e_pwd;
 
-use common::e2e_pwd_env::run_inside_test_path;
+use e2e_pwd::run_inside_test_path;
 
 #[cfg(test)]
 mod tests {
+
+  use std::fs;
+
   use super::run_inside_test_path;
 
+  use juicier::runner::Runner;
+
+  /// running `juic init` creates 'cup', where various oj environment lives.
   #[test]
-  fn init_creates_project() {
+  fn init_creates_cup() {
     run_inside_test_path(|| {
-      assert!(true);
+      let runner = Runner::new();
+      let _ = runner.run_command("init".to_string());
+      assert!(fs::exists("./cup.json").is_ok_and(|x| x));
     })
   }
 }
