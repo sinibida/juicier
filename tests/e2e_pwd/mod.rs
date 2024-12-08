@@ -6,50 +6,93 @@ use std::path::Path;
 const TEST_PATH: &'static str = "./e2e_temp";
 
 struct Context {
+  path: String,
   pwd: String,
 }
 
+fn get_path_inner(retry: u16) -> String {
+  let retry_string = retry.to_string();
+  let time_string = chrono::Local::now().timestamp().to_string();
+  
+  let mut tokens = vec![
+    TEST_PATH,
+    time_string.as_str(),
+  ];
+  if retry > 0 {
+    tokens.push(retry_string.as_str());
+  }
+  let filename = tokens.join("-");
+
+  Path::new(".").join(filename).to_str().unwrap().to_owned()
+}
+
 fn get_path() -> String {
-  Path::new(".").join(TEST_PATH).to_str().unwrap().to_owned()
+  let mut retry = 0;
+  loop {
+    let path = get_path_inner(retry);
+    if fs::exists(&path).is_ok_and(|x| x) {
+      retry += 1;
+      continue;
+    } else {
+      return path.as_str().to_owned();
+    }
+  }
 }
 
 fn setup(context: &mut Context) {
-  fs::create_dir(get_path())
+  context.path = get_path();
+  fs::create_dir(&context.path)
     .map_err(|err| format!("failed creating directory: {}", err.kind()))
     .unwrap();
 
   context.pwd = env::current_dir().unwrap().to_str().unwrap().to_string();
-  env::set_current_dir(get_path())
+  env::set_current_dir(&context.path)
     .map_err(|err| format!("failed cd: {}", err.kind()))
     .unwrap();
 }
 
-fn teardown(context: &Context) {
+fn teardown(context: &Context, clean: bool) {
   env::set_current_dir(Path::new(&context.pwd))
     .map_err(|err| format!("failed cd: {}", err.kind()))
     .unwrap();
-  fs::remove_dir_all(get_path())
-    .map_err(|err| format!("failed removing directory: {}", err.kind()))
-    .unwrap();
+  if clean {
+    fs::remove_dir_all(&context.path)
+      .map_err(|err| format!("failed removing directory: {}", err.kind()))
+      .unwrap();
+  }
 }
 
-/// Runs provided function in test folder & pwd.
-/// It will be run inside `TEST_PATH` path, defined as a constant inside the source code.
-/// (`"./e2e_temp"`)
-pub fn run_inside_test_path<T>(func: T)
-where
-  T: Fn() -> () + panic::RefUnwindSafe,
-{
-  let mut context = Context { pwd: String::new() };
-  setup(&mut context);
+pub struct WithTestFolder {
+  pub clean: bool,
+}
 
-  let result = panic::catch_unwind(|| {
-    func();
-  });
+impl Default for WithTestFolder {
+  fn default() -> Self {
+    Self { clean: true }
+  }
+}
 
-  teardown(&context);
+impl WithTestFolder {
+  /// Runs provided function in test folder & pwd.
+  /// It will be run inside `TEST_PATH` path, defined as a constant inside the source code.
+  /// (`"./e2e_temp"`)
+  pub fn run<T>(self: &Self, func: T)
+  where
+    T: Fn() -> () + panic::RefUnwindSafe,
+  {
+    let mut context = Context {
+      pwd: String::new(),
+      path: String::new(),
+    };
 
-  if let Err(err) = result {
-    panic::resume_unwind(err)
+    setup(&mut context);
+    let result = panic::catch_unwind(|| {
+      func();
+    });
+    teardown(&context, self.clean);
+
+    if let Err(err) = result {
+      panic::resume_unwind(err)
+    }
   }
 }

@@ -1,8 +1,11 @@
 mod error;
+mod init;
 
 use clap::Parser;
 use error::Error;
+use init::run_init;
 
+use crate::logger::log_error;
 use crate::parser::Cli;
 use crate::parser::Commands;
 
@@ -19,11 +22,12 @@ impl Runner {
       Cli::try_parse_from(command.split_whitespace()).map_err(|err| Error::ParserError(err))?;
 
     match parsed.command {
-      Commands::Init(_args) => {
-        // Stub
-        println!("Init Run!")
-      },
-      _ => panic!("unimplemented")
+      Commands::Init(args) => {
+        if let Err(err) = run_init(args) {
+          log_error(err);
+        }
+      }
+      _ => panic!("unimplemented"),
     }
 
     Ok(())

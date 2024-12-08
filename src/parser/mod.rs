@@ -1,4 +1,4 @@
-mod init;
+pub mod init;
 
 use clap::{Parser, Subcommand};
 use init::InitArgs;
@@ -28,16 +28,10 @@ mod tests {
 
   #[test]
   fn init_returns_init_args() {
-    assert!(
-      if let Commands::Init(_) = Cli::try_parse_from(["juic", "init"])
-        .map_err(|err| err.to_string())
-        .unwrap()
-        .command
-      {
-        true
-      } else {
-        false
-      }
-    );
+    let result = Cli::try_parse_from(["juic", "init"]);
+    assert!(matches!(
+      result.map_err(|err| err.to_string()).unwrap().command,
+      Commands::Init(_)
+    ));
   }
 }
