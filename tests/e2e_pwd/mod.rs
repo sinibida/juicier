@@ -11,17 +11,12 @@ struct Context {
 }
 
 fn get_path_inner(retry: u16) -> String {
-  let retry_string = retry.to_string();
-  let time_string = chrono::Local::now().timestamp().to_string();
-  
-  let mut tokens = vec![
-    TEST_PATH,
-    time_string.as_str(),
-  ];
+  let timestamp = chrono::Local::now().timestamp();
+
+  let mut filename = format!("{TEST_PATH}-{timestamp}");
   if retry > 0 {
-    tokens.push(retry_string.as_str());
+    filename = format!("{filename}-{retry}");
   }
-  let filename = tokens.join("-");
 
   Path::new(".").join(filename).to_str().unwrap().to_owned()
 }
