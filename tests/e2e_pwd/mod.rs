@@ -18,13 +18,14 @@ fn get_path_inner(retry: u16) -> String {
     filename = format!("{filename}-{retry}");
   }
 
-  Path::new(".").join(filename).to_str().unwrap().to_owned()
+  String::from(Path::new(".").join(filename).to_str().unwrap())
 }
 
 fn get_path() -> String {
   let mut retry = 0;
   loop {
     let path = get_path_inner(retry);
+    // str implements AsRef<Path> so this code has no problem
     if fs::exists(&path).is_ok_and(|x| x) {
       retry += 1;
       continue;
