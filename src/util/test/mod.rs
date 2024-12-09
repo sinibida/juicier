@@ -33,5 +33,9 @@ impl TempFolderContext {
     Self::new_inner(true)
   }
 
+  pub fn get_temp_dir(&self) -> &TempDir {
+    &self.temp_dir
+  }
+
   pub fn close(self) {}
 }

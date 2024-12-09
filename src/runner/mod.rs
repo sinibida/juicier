@@ -5,7 +5,6 @@ use clap::Parser;
 use error::Error;
 use init::run_init;
 
-use crate::logger::log_error;
 use crate::parser::Cli;
 use crate::parser::Commands;
 
@@ -16,20 +15,24 @@ impl Runner {
     return Runner {};
   }
 
+  fn run_command_arg(&self, command: Commands) -> Result<(), Error> {
+    match command {
+      Commands::Init(args) => run_init(args),
+      _ => todo!(),
+    }.map_err(|err| Error::ExecutionError(err))
+  }
+
   /// Stub
   pub fn run_command(self: &Self, command: String) -> Result<(), Error> {
     let parsed =
       Cli::try_parse_from(command.split_whitespace()).map_err(|err| Error::ParserError(err))?;
 
-    match parsed.command {
-      Commands::Init(args) => {
-        if let Err(err) = run_init(args) {
-          log_error(err);
-        }
-      }
-      _ => panic!("unimplemented"),
-    }
+    self.run_command_arg(parsed.command)
+  }
 
-    Ok(())
+  pub fn run_cli(self: &Self) -> Result<(), Error> {
+    let parsed = Cli::try_parse().map_err(|err| Error::ParserError(err))?;
+
+    self.run_command_arg(parsed.command)
   }
 }
