@@ -15,7 +15,7 @@ mod tests {
   #[test]
   fn init_creates_cup() {
     WithTestFolder {
-      clean: false,
+      clean: true,
       ..Default::default()
     }
     .run(|| {
