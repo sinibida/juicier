@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-  use std::{fs, path::Path};
+  use std::fs;
 
   use juicier::{runner::Runner, util::test::TempFolderContext};
 
